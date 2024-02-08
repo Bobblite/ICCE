@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package Environment;
+
+service Environment
+{
+	rpc GetEnvData(ICCE) returns (EnvData){}
+}
+
+message ICCE
+{
+	int32 id = 1;
+}
+
+message EnvData
+{
+	int32 status = 1;
+	int32 episode = 2;
+}
