@@ -19,6 +19,4 @@ class EnvironmentEndpoint():
     
     def start(self):
         self._server.start()
-
-    def shutdown(self):
         self._server.wait_for_termination()
