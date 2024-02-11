@@ -4,16 +4,53 @@ package Environment;
 
 service Environment
 {
-	rpc GetEnvData(ICCE) returns (EnvData){}
+	rpc handshake_and_validate(HandshakeRequest) returns (HandshakeResponse){}
+	rpc start_simulation(StartRequest) returns (StartResponse) {}
+	rpc get_env_data(EnvDataRequest) returns (EnvDataResponse){}
+	rpc set_action_data(ActionRequest) returns (ActionResponse){}
 }
 
-message ICCE
+
+message HandshakeRequest
 {
 	int32 id = 1;
 }
 
-message EnvData
+message HandshakeResponse
+{
+	int32 status = 1;
+}
+
+
+message StartRequest
+{
+    int32 id = 1;
+}
+
+message StartResponse
+{
+    int32 status = 1;
+}
+
+
+message EnvDataRequest
+{
+	int32 id = 1;
+}
+
+message EnvDataResponse
 {
 	int32 status = 1;
 	int32 episode = 2;
+}
+
+
+message ActionRequest
+{
+	int32 id = 1;
+}
+
+message ActionResponse
+{
+	int32 status = 1;
 }
