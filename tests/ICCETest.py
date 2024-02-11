@@ -1,12 +1,16 @@
-from ICCE.interfaces import ICCEEndpoint
+from ICCE.interfaces import ICCEInterface
+
+class MyICCE(ICCEInterface):
+    def __init__(self):
+        super().__init__()
+
+        self.n_observations = 10
+        self.n_actions = 4
 
 def main():
-    icce = ICCEEndpoint()
-    handshake_resp = icce.handshake_and_validate(id=1)
-    start_resp = icce.start_simulation(id=1)
-    env_data = icce.get_env_data(id=1)
-    print(f'Received status: {env_data.status} | episode: {env_data.episode}')
-    action_resp = icce.set_action_data(id=1)
+    icce = MyICCE()
+    icce.run()
+    
 
 if __name__ == '__main__':
     main()

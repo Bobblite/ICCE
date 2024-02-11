@@ -1,2 +1,2 @@
-from .ICCEEndpoint import ICCEEndpoint
-from .EnvironmentEndpoint import EnvironmentEndpoint
+from .EnvironmentInterface import EnvironmentInterface
+from .ICCEInterface import ICCEInterface

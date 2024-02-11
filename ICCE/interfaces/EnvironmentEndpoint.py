@@ -5,9 +5,14 @@ import threading
 from concurrent import futures
 
 class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
+    def __init__(self, handshake_cb):
+        super().__init__()
+        # Store callbacks
+        self._on_handshake_and_validate = handshake_cb
+
     def handshake_and_validate(self, request, context):
-        print('handshake_and_validate called by ICCE ', request.id)
-        response = Environment_pb2.HandshakeResponse(status=1)
+        id, status = self._on_handshake_and_validate(request.n_observations, request.n_actions)
+        response = Environment_pb2.HandshakeResponse(id=id, status=status)
         return response
     
     def start_simulation(self, request, context):
@@ -29,11 +34,15 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
     
 
 class EnvironmentEndpoint():
-    def __init__(self):
+    def __init__(self, handshake_cb):
+        # gRPC server
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._server_thread = threading.Thread(target=self.start_server)
 
-        Environment_pb2_grpc.add_EnvironmentServicer_to_server(EnvironmentServicer(), self._server)
+        # Environment servicer
+        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb)
+
+        Environment_pb2_grpc.add_EnvironmentServicer_to_server(self._servicer, self._server)
         self._server.add_insecure_port('localhost:50051')
     
     def start(self):
