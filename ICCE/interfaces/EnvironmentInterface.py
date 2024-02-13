@@ -37,8 +37,30 @@ class EnvironmentInterface:
         """
         raise NotImplementedError('Functionality to generate ICCE ID must be defined!')
 
-    # Fundamental callbacks
+    # Core callbacks
     def _on_handshake_and_validate(self, n_observations, n_actions):
+        """ Callback function used to generate ICCE ID and validate observation/action spaces.
+        
+        This is function is called when the RPC method `handshake_and_validate` is invoked. An ICCE ID is generated using the implemented
+        interface method `generate_id()` defined when interfacing the `EnvironmentInterface` class. The observation/action sizes of the model
+        in the ICCE are also validated against that of the interfaced environment.
+
+        Status code:
+            -1 : Invalid observation size
+            -2 : Invalid action size
+            1: Success
+
+        Args:
+            n_observations : The observation size, or the input of the ICCE.
+            n_actions: The action size, or the output of the ICCE.
+
+        Returns:
+            The generated ICCE ID based on the defined interface and the validation status.
+
+        Raises:
+            None
+        """
+
         if (self.n_observations != n_observations):
             return INVALID_ID, -1
         if (self.n_actions != n_actions):
