@@ -5,10 +5,11 @@ import threading
 from concurrent import futures
 
 class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
-    def __init__(self, handshake_cb):
+    def __init__(self, handshake_cb, env_data_cb):
         super().__init__()
         # Store callbacks
         self._on_handshake_and_validate = handshake_cb
+        self._on_get_env_data = env_data_cb
 
     def handshake_and_validate(self, request, context):
         """ Servicer implementation of handshake_and_validate.
@@ -37,9 +38,18 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
     
     def get_env_data(self, request, context):
         print(f'received from ID: {request.id}')
+        # Sample environment data from simulation
+        obs, reward, term, trunc, info = self._on_get_env_data(request.id)
+
+        # Set response
         response = Environment_pb2.EnvDataResponse()
-        response.status = 1
-        response.episode = 0
+        response.data.observations = obs
+        response.data.reward = reward
+        response.data.terminated = term
+        response.data.truncated = trunc
+        # TODO: response.data.info
+        response.data.episode = 1 # TODO
+        response.status = 1 # Environment still running
         return response
     
     def set_action_data(self, request, context):
@@ -49,13 +59,13 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
     
 
 class EnvironmentEndpoint():
-    def __init__(self, handshake_cb):
+    def __init__(self, handshake_cb, env_data_cb):
         # gRPC server
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._server_thread = threading.Thread(target=self.start_server)
 
         # Environment servicer
-        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb)
+        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, env_data_cb=env_data_cb)
 
         Environment_pb2_grpc.add_EnvironmentServicer_to_server(self._servicer, self._server)
         self._server.add_insecure_port('localhost:50051')

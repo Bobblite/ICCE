@@ -1,17 +1,19 @@
 from .ICCEEndpoint import ICCEEndpoint
 
+import numpy as np
+
 class ICCEInterface:
     
     def __init__(self):
         self.n_observations: int
         self.n_actions: int
-        
+        self.id = -1
         self._endpoint = ICCEEndpoint()
 
     def run(self):
-        # Connect to environment and validate I/O of model with environment
+        # Handshake with environment and validate I/O of model with environment - Blocking
         response = self._endpoint.handshake_and_validate(self.n_observations, self.n_actions)
-        # Handshake failed
+        ## Handshake failed
         if response.status != 1:
             print('Handshake failed.')
             match(response.status):
@@ -20,10 +22,14 @@ class ICCEInterface:
                 case -2:
                     print('n_actions do not match.')
             return
-        # Handshake success
-        print('Handshake successful. ICCE ID : ', response.id)
+        ## Handshake success
+        self.id = response.id
+        print('Handshake successful. ICCE ID : ', self.id)
 
-        start_resp = self._endpoint.start_simulation(id=1)
+        # Request to start simulation - Blocking
+        #response = self._endpoint.start_simulation(id=self.id)
+
         env_data = self._endpoint.get_env_data(id=1)
-        print(f'Received status: {env_data.status} | episode: {env_data.episode}')
+        obs = np.frombuffer(env_data.data.observations, dtype=np.float32)
+        print(f'Received observations\n{obs}')
         action_resp = self._endpoint.set_action_data(id=1)

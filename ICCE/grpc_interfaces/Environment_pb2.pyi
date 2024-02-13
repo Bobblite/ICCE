@@ -1,6 +1,6 @@
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Optional as _Optional
+from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -27,10 +27,12 @@ class StartRequest(_message.Message):
     def __init__(self, id: _Optional[int] = ...) -> None: ...
 
 class StartResponse(_message.Message):
-    __slots__ = ("status",)
+    __slots__ = ("data", "status")
+    DATA_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
+    data: EnvData
     status: int
-    def __init__(self, status: _Optional[int] = ...) -> None: ...
+    def __init__(self, data: _Optional[_Union[EnvData, _Mapping]] = ..., status: _Optional[int] = ...) -> None: ...
 
 class EnvDataRequest(_message.Message):
     __slots__ = ("id",)
@@ -39,12 +41,12 @@ class EnvDataRequest(_message.Message):
     def __init__(self, id: _Optional[int] = ...) -> None: ...
 
 class EnvDataResponse(_message.Message):
-    __slots__ = ("status", "episode")
+    __slots__ = ("data", "status")
+    DATA_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
-    EPISODE_FIELD_NUMBER: _ClassVar[int]
+    data: EnvData
     status: int
-    episode: int
-    def __init__(self, status: _Optional[int] = ..., episode: _Optional[int] = ...) -> None: ...
+    def __init__(self, data: _Optional[_Union[EnvData, _Mapping]] = ..., status: _Optional[int] = ...) -> None: ...
 
 class ActionRequest(_message.Message):
     __slots__ = ("id",)
@@ -57,3 +59,17 @@ class ActionResponse(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     status: int
     def __init__(self, status: _Optional[int] = ...) -> None: ...
+
+class EnvData(_message.Message):
+    __slots__ = ("observations", "reward", "terminated", "truncated", "episode")
+    OBSERVATIONS_FIELD_NUMBER: _ClassVar[int]
+    REWARD_FIELD_NUMBER: _ClassVar[int]
+    TERMINATED_FIELD_NUMBER: _ClassVar[int]
+    TRUNCATED_FIELD_NUMBER: _ClassVar[int]
+    EPISODE_FIELD_NUMBER: _ClassVar[int]
+    observations: bytes
+    reward: float
+    terminated: bool
+    truncated: bool
+    episode: int
+    def __init__(self, observations: _Optional[bytes] = ..., reward: _Optional[float] = ..., terminated: bool = ..., truncated: bool = ..., episode: _Optional[int] = ...) -> None: ...
