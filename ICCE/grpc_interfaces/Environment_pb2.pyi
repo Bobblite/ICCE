@@ -20,20 +20,6 @@ class HandshakeResponse(_message.Message):
     status: int
     def __init__(self, id: _Optional[int] = ..., status: _Optional[int] = ...) -> None: ...
 
-class StartRequest(_message.Message):
-    __slots__ = ("id",)
-    ID_FIELD_NUMBER: _ClassVar[int]
-    id: int
-    def __init__(self, id: _Optional[int] = ...) -> None: ...
-
-class StartResponse(_message.Message):
-    __slots__ = ("data", "status")
-    DATA_FIELD_NUMBER: _ClassVar[int]
-    STATUS_FIELD_NUMBER: _ClassVar[int]
-    data: EnvData
-    status: int
-    def __init__(self, data: _Optional[_Union[EnvData, _Mapping]] = ..., status: _Optional[int] = ...) -> None: ...
-
 class EnvDataRequest(_message.Message):
     __slots__ = ("id",)
     ID_FIELD_NUMBER: _ClassVar[int]

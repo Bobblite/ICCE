@@ -19,11 +19,6 @@ class EnvironmentStub(object):
                 request_serializer=Environment__pb2.HandshakeRequest.SerializeToString,
                 response_deserializer=Environment__pb2.HandshakeResponse.FromString,
                 )
-        self.start_simulation = channel.unary_unary(
-                '/Environment.Environment/start_simulation',
-                request_serializer=Environment__pb2.StartRequest.SerializeToString,
-                response_deserializer=Environment__pb2.StartResponse.FromString,
-                )
         self.get_env_data = channel.unary_unary(
                 '/Environment.Environment/get_env_data',
                 request_serializer=Environment__pb2.EnvDataRequest.SerializeToString,
@@ -40,12 +35,6 @@ class EnvironmentServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def handshake_and_validate(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def start_simulation(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -70,11 +59,6 @@ def add_EnvironmentServicer_to_server(servicer, server):
                     servicer.handshake_and_validate,
                     request_deserializer=Environment__pb2.HandshakeRequest.FromString,
                     response_serializer=Environment__pb2.HandshakeResponse.SerializeToString,
-            ),
-            'start_simulation': grpc.unary_unary_rpc_method_handler(
-                    servicer.start_simulation,
-                    request_deserializer=Environment__pb2.StartRequest.FromString,
-                    response_serializer=Environment__pb2.StartResponse.SerializeToString,
             ),
             'get_env_data': grpc.unary_unary_rpc_method_handler(
                     servicer.get_env_data,
@@ -110,23 +94,6 @@ class Environment(object):
         return grpc.experimental.unary_unary(request, target, '/Environment.Environment/handshake_and_validate',
             Environment__pb2.HandshakeRequest.SerializeToString,
             Environment__pb2.HandshakeResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def start_simulation(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Environment.Environment/start_simulation',
-            Environment__pb2.StartRequest.SerializeToString,
-            Environment__pb2.StartResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

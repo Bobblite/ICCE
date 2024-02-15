@@ -31,11 +31,6 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
         response = Environment_pb2.HandshakeResponse(id=id, status=status)
         return response
     
-    def start_simulation(self, request, context):
-        print('start_simulation called by ICCE ', request.id)
-        response = Environment_pb2.StartResponse(status=1)
-        return response
-    
     def get_env_data(self, request, context):
         print(f'received from ID: {request.id}')
         # Sample environment data from simulation

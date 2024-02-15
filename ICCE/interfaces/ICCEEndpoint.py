@@ -12,10 +12,6 @@ class ICCEEndpoint():
             n_actions=n_actions)
         
         return self._stub.handshake_and_validate(handshake_req)
-    
-    def start_simulation(self, id: int):
-        start_req = Environment_pb2.StartRequest(id=id)
-        return self._stub.start_simulation(start_req)
 
     def get_env_data(self, id: int):
         icce_data = Environment_pb2.EnvDataRequest(id=id)
