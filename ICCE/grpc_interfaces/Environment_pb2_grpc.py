@@ -19,10 +19,10 @@ class EnvironmentStub(object):
                 request_serializer=Environment__pb2.HandshakeRequest.SerializeToString,
                 response_deserializer=Environment__pb2.HandshakeResponse.FromString,
                 )
-        self.get_env_data = channel.unary_unary(
-                '/Environment.Environment/get_env_data',
-                request_serializer=Environment__pb2.EnvDataRequest.SerializeToString,
-                response_deserializer=Environment__pb2.EnvDataResponse.FromString,
+        self.sample = channel.unary_unary(
+                '/Environment.Environment/sample',
+                request_serializer=Environment__pb2.SampleRequest.SerializeToString,
+                response_deserializer=Environment__pb2.SampleResponse.FromString,
                 )
         self.set_action_data = channel.unary_unary(
                 '/Environment.Environment/set_action_data',
@@ -40,7 +40,7 @@ class EnvironmentServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def get_env_data(self, request, context):
+    def sample(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -60,10 +60,10 @@ def add_EnvironmentServicer_to_server(servicer, server):
                     request_deserializer=Environment__pb2.HandshakeRequest.FromString,
                     response_serializer=Environment__pb2.HandshakeResponse.SerializeToString,
             ),
-            'get_env_data': grpc.unary_unary_rpc_method_handler(
-                    servicer.get_env_data,
-                    request_deserializer=Environment__pb2.EnvDataRequest.FromString,
-                    response_serializer=Environment__pb2.EnvDataResponse.SerializeToString,
+            'sample': grpc.unary_unary_rpc_method_handler(
+                    servicer.sample,
+                    request_deserializer=Environment__pb2.SampleRequest.FromString,
+                    response_serializer=Environment__pb2.SampleResponse.SerializeToString,
             ),
             'set_action_data': grpc.unary_unary_rpc_method_handler(
                     servicer.set_action_data,
@@ -98,7 +98,7 @@ class Environment(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def get_env_data(request,
+    def sample(request,
             target,
             options=(),
             channel_credentials=None,
@@ -108,9 +108,9 @@ class Environment(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Environment.Environment/get_env_data',
-            Environment__pb2.EnvDataRequest.SerializeToString,
-            Environment__pb2.EnvDataResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/Environment.Environment/sample',
+            Environment__pb2.SampleRequest.SerializeToString,
+            Environment__pb2.SampleResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -1,117 +1,149 @@
 from .EnvironmentEndpoint import EnvironmentEndpoint
+from ..utils import Status, INVALID_ID
 
 import numpy as np
 import time
 import threading
 
-INVALID_ID = -1
-
 class EnvironmentInterface:
-    def __init__(self, frequency_hz=60, max_episodes=100, time_between_episodes=3):
+    def __init__(self, frequency_hz=240, max_episodes=1, time_between_episodes=3):
         # Environment attributes
-        self.n_observations: int # n_observation of an agent
-        self.n_actions: int # n_action of an agent
+        self.n_observation: int # n_observation of an agent
+        self.n_action: int # n_action of an agent
         self.observations: np.ndarray
+        self.actions: np.ndarray
         self.rewards: np.ndarray
         self.term: np.ndarray
         self.trunc: np.ndarray
-        self.info: dict()
-        self.episode: int
+        self.info: list
 
         # Environment settings
+        self.episode = 0
+        self.status = Status.SUCCESS
         self.frequency_seconds = 1.0/frequency_hz
         self.max_episodes = max_episodes
         self.time_between_episodes = time_between_episodes
 
         # Maps between ICCE and Simulation Agents
-        self._icce_to_sim_agent = dict()
-        self._sim_agent_to_icce = dict()
-        self._agents = []
+        self._icce_to_sim_agent = {}
+        self._sim_agent_to_icce = {}
+        self.registered_agents = []
 
         # Communication layer endpoint
         self._endpoint = EnvironmentEndpoint(
             handshake_cb=self._on_handshake_and_validate,
-            env_data_cb=self._on_get_env_data
+            sample_cb=self._on_sample
         )
 
         # Mutex lock
         self.lock = threading.Lock()
     
     @property
-    def simulation_agents(self):
-        return self._agents.copy()
+    def active_agents(self):
+        return self._sim_agent_to_icce.keys()
 
     def run(self):
         """ Starts the environment. """
+        # Instantiate environment data
+        self.observations = np.ndarray(shape=(len(self.registered_agents), self.n_observation), dtype=np.float32)
+        self.actions = np.ndarray(shape=(len(self.registered_agents), self.n_action), dtype=np.float32)
+        self.rewards = np.ndarray(shape=(len(self.registered_agents)), dtype=np.float32)
+        self.term = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
+        self.trunc = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
+        self.info = [{} for _ in range(len(self.registered_agents))]
 
         # Reset simulation and pull initial data
-        self.observations, self.info = self.reset()
+        self._reset()
+
+        print(self.observations)
 
         # Start gRPC server
         self._endpoint.start()
-
+        
+        # DEBUG COUNTER
+        i=0
         # Sample from Simulation as long as episode count not reached
         while(self.episode < self.max_episodes):
+            print(self.episode)
             # sample at fixed interval
-            self.observations, self.rewards, self.term, self.trunc, self.info = self._sample_data()
+            start = time.perf_counter()
+                
+            # sample
+            self._sample_data()
+            # DEBUG ONLY
+            i += 1
+            if i > 300:
+                self.term[0] = True
 
             # Check for end of episode
             if any(self.term) or any(self.trunc):
                 # Sleep to allow time for ICCEs to sample this truncated observation
+                # TODO: Or maybe use status code to indicate term/trunc and wait for all ICCEs to acknoledge
+                # TODO-RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
                 time.sleep(self.time_between_episodes)
 
                 # Reset Environment
-                self.observations = np.full_like(self.observations, 0.0, dtype=self.observations.dtype)
-                self.rewards = np.full_like(self.rewards, 0.0, dtype=self.rewards.dtype)
-                self.term = np.full_like(self.term, False, dtype=self.term.dtype)
-                self.trunc = np.full_like(self.trunc, False, dtype=self.trunc.dtype)
+                self._reset()
 
                 # Reset Simulation and environment
                 self.reset()
 
+                self.episode = self.max_episodes # DEBUG ONLY
                 # Increment episode count
                 self.episode += 1
 
+            # Check interval
+            # delay = desired_interval - delta_time
+            delta = time.perf_counter() - start
+            delay = self.frequency_seconds - delta
+            if delay > 0: # positive delay -> faster than expected
+                time.sleep(delay)
+
+        # Set status to shutdown
+        self.status = Status.SHUTDOWN
+        # TODO: Maybe wanna use Status code to indicate shutting down and wait for all ICCE to acknoledge?
+        # TODO RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
+        # TODO RE2: Anyways when ICCE invokes RPC but server doesnt respond, they get an error anyways
+        # Sleep to allow time for ICCEs to sample this shutdown status 
+        time.sleep(10)
         self._endpoint.shutdown()
 
-    def _interval(self, func):
-        start = time.perf_counter()
-        result = func()
-        delay = self.frequency_seconds - (time.perf_counter() - start) # delay = desired_interval - delta_time
-        if delay > 0: # positive delay -> faster than expected
-            time.sleep(delay)
-        return result
-    
-    @_interval
-    def _sample_data(self):
-        # TODO: Pull data for each Sim agent and organize into ndarrays based on ICCE IDs
-        return self.sample()
-    
+    def _reset(self):
+        # Reset Simulation
+        self.reset()
+        # Reset Environment
+        self._sample_data()
 
-    def add_agent(self, agent_id):
-        self._agents.append(agent_id)
+    def _sample_data(self):
+        self.lock.acquire()
+        for icce_id in range(len(self.registered_agents)):
+            self.observations[icce_id], self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id] = self.sample(self.registered_agents[icce_id])
+        self.lock.release()
+
+    def register_agent(self, agent_id):
+        self.registered_agents.append(agent_id)
     
     # Interfaces
     def start(self) -> int:
         raise NotImplementedError('Functionality to start the simulation must be defined!')
 
-    def reset(self) -> None:
+    def reset(self):
         """ {MUST BE DEFINED} Interface to reset the simulation.
         
-        This is an interface function which resets the simulation and returns observations and auxiliary information.
+        This is an interface function which resets the simulation.
 
         Args:
             None
 
         Returns:
-            Observations and auxiliary information for all agents.
+            None
 
         Raises:
             NotImplementedError: If this function is not implemented by the interfacing Environment.
         """
         raise NotImplementedError('Functionality to reset environment must be defined!')
     
-    def sample(self, agent_id: int) -> (np.ndarray, float, bool, bool, dict):
+    def sample(self, agent_id: int) -> tuple[np.ndarray, float, bool, bool, dict]:
         """ {MUST BE DEFINED} Interface to pull environment data from the simulation.
         
         This is an interface function which retrieves simulation data for the specified Simulation Agent and converts it
@@ -132,20 +164,15 @@ class EnvironmentInterface:
         raise NotImplementedError('Functionality to set action for simulation agent must be defined!')
     
     # Core callbacks
-    def _on_handshake_and_validate(self, n_observations: int, n_actions: int) -> (int, int):
+    def _on_handshake_and_validate(self, n_observation: int, n_actions: int) -> tuple[int, Status]:
         """ Callback function used to generate ICCE ID and validate observation/action spaces.
         
         This is function is called when the RPC method `handshake_and_validate` is invoked. An ICCE ID is generated using the implemented
         interface method `generate_id()` defined when interfacing the `EnvironmentInterface` class. The observation/action sizes of the model
         in the ICCE are also validated against that of the interfaced environment.
 
-        Status code:
-            -1 : Invalid observation size
-            -2 : Invalid action size
-            1: Success
-
         Args:
-            n_observations : The observation size, or the input of the ICCE.
+            n_observation : The observation size, or the input of the ICCE.
             n_actions: The action size, or the output of the ICCE.
 
         Returns:
@@ -155,45 +182,56 @@ class EnvironmentInterface:
             None
         """
         # I/O validation
-        if (self.n_observations != n_observations):
-            return INVALID_ID, -1
-        if (self.n_actions != n_actions):
-            return INVALID_ID, -2
-        
+        if (self.n_observation != n_observation):
+            return INVALID_ID, Status.OBSERVATION_SIZE_ERROR
+        if (self.n_action != n_actions):
+            return INVALID_ID, Status.ACTION_SIZE_ERROR
         # Generate ICCE ID using interfaced function
-        icce_id, status = self._generate_icce_id()
-        if status != 1:
-            return icce_id, status
+        icce_id = self._generate_icce_id()
+        if icce_id == INVALID_ID:
+            return INVALID_ID, Status.ICCE_ID_ERROR
         
         # Get an agent that has yet to be mapped
-        agent_id = [id for id in self._agents if id not in self._sim_agent_to_icce.keys()][0]
+        agent_id = self._generate_agent_id()
+        if agent_id == INVALID_ID:
+            return INVALID_ID, Status.AGENT_ID_ERROR
         
         # Map icce to agent
         self._add_icce(icce_id, agent_id)
 
-        return icce_id, 1
+        # Print log
+        print("New ICCE registered. ICCE : Agent map")
+        for agent in self._sim_agent_to_icce.keys():
+            print(f"{agent} : {self._sim_agent_to_icce[agent]}")
+
+        return icce_id, Status.SUCCESS
 
     # HELPERS
-    def _generate_icce_id(self) -> (int, int):
-        if len(self._icce_to_sim_agent) >= len(self._agents):
-            return INVALID_ID, -3
-        
-        return (len(self._agents)), 1
+    def _generate_icce_id(self) -> int:
+        self.lock.acquire()
+        if len(self._icce_to_sim_agent) >= len(self.registered_agents):
+            icce_id = INVALID_ID
+        else:
+            icce_id = (len(self._icce_to_sim_agent))
+        self.lock.release()
+        return icce_id
     
-    def _get_unmapped_sim_agent(self) -> (int, int):
-        unmapped_agents = [id for id in self._agents if id not in self._sim_agent_to_icce.keys()]
-        if not unmapped_agents:
-            return INVALID_ID, -4
-        
-        return unmapped_agents[0], 1
+    def _generate_agent_id(self) -> int:
+        agent_id = INVALID_ID
+        self.lock.acquire()
+        for id in self.registered_agents:
+            if id not in self.active_agents:
+                agent_id = id
+                break
+        self.lock.release()
+        return agent_id
 
-    def _on_get_env_data(self, icce_id):
-        # TODO: IMPLEMENT METHOD TO PULL ICCE DATA FROM ENV
-        obs, reward, term, trunc, info = self.sample(icce_id)
-        return obs.tobytes(), reward, term, trunc, info
+    def _on_sample(self, icce_id):
+        return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(Status.SUCCESS)
     
     def _add_icce(self, icce_id, agent_id):
         self.lock.acquire()
         self._icce_to_sim_agent.update({icce_id:agent_id})
         self._sim_agent_to_icce.update({agent_id:icce_id})
         self.lock.release()
+

@@ -5,11 +5,11 @@ import threading
 from concurrent import futures
 
 class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
-    def __init__(self, handshake_cb, env_data_cb):
+    def __init__(self, handshake_cb, sample_cb):
         super().__init__()
         # Store callbacks
         self._on_handshake_and_validate = handshake_cb
-        self._on_get_env_data = env_data_cb
+        self._sample_cb = sample_cb
 
     def handshake_and_validate(self, request, context):
         """ Servicer implementation of handshake_and_validate.
@@ -28,24 +28,24 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
             None
         """
         id, status = self._on_handshake_and_validate(request.n_observations, request.n_actions)
-        response = Environment_pb2.HandshakeResponse(id=id, status=status)
+        response = Environment_pb2.HandshakeResponse(id=id, status=int(status))
         return response
     
-    def get_env_data(self, request, context):
-        print(f'received from ID: {request.id}')
+    def sample(self, request, context):
         # Sample environment data from simulation
-        obs, reward, term, trunc, info = self._on_get_env_data(request.id)
+        obs, reward, term, trunc, info, status = self._sample_cb(request.id)
 
         # Set response
-        response = Environment_pb2.EnvDataResponse()
-        response.data.observations = obs
-        response.data.reward = reward
-        response.data.terminated = term
-        response.data.truncated = trunc
+        response = Environment_pb2.SampleResponse()
+        response.observation = obs
+        response.reward = reward
+        response.terminated = term
+        response.truncated = trunc
         # TODO: response.data.info
-        response.data.episode = 1 # TODO
-        response.status = 1 # Environment still running
+        response.episode = 1 # TODO
+        response.status = status
         return response
+        
     
     def set_action_data(self, request, context):
         print('set_action_data called by ICCE ', request.id)
@@ -54,13 +54,13 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
     
 
 class EnvironmentEndpoint():
-    def __init__(self, handshake_cb, env_data_cb):
+    def __init__(self, handshake_cb, sample_cb):
         # gRPC server
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._server_thread = threading.Thread(target=self.start_server)
 
         # Environment servicer
-        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, env_data_cb=env_data_cb)
+        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, sample_cb=sample_cb)
 
         Environment_pb2_grpc.add_EnvironmentServicer_to_server(self._servicer, self._server)
         self._server.add_insecure_port('localhost:50051')

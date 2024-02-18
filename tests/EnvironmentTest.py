@@ -3,27 +3,25 @@ from ICCE.interfaces import EnvironmentInterface
 
 class MyEnvironment(EnvironmentInterface):
     def __init__(self):
-        super().__init__(expected_agents=2)
+        super().__init__()
         self.num_icce = 0
-        self.n_observations = 10
-        self.n_actions = 4
+        self.n_observation = 10
+        self.n_action = 4
+    
+    def start(self) -> int:
+        print('start() called')
 
-    def generate_id(self) -> (int, int):
-        id = self.num_icce
-        agent_id = id
-        self.num_icce+=1
-        return id, agent_id
-    
-    def sample(self, icce_id: int) -> (np.ndarray, float, bool, bool, dict):
+    def sample(self, icce_id: int) -> tuple[np.ndarray, float, bool, bool, dict]:
         data = np.array([1,2,3,4,5,6,7,8,9,10], dtype=np.float32)
-        return data, 11, False, False, {'test':12}
+        return data, 11.0, False, False, {'test':12}
     
-    def reset(self) -> None:
+    def reset(self):
         print('Reset called')
-        pass
 
 def main():
     env = MyEnvironment()
+    env.register_agent(55)
+    env.register_agent(56)
     env.run()
     
 if __name__ == '__main__':

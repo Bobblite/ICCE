@@ -5,7 +5,7 @@ package Environment;
 service Environment
 {
 	rpc handshake_and_validate(HandshakeRequest) returns (HandshakeResponse){}
-	rpc get_env_data(EnvDataRequest) returns (EnvDataResponse){}
+	rpc sample(SampleRequest) returns (SampleResponse){}
 	rpc set_action_data(ActionRequest) returns (ActionResponse){}
 }
 
@@ -23,18 +23,19 @@ message HandshakeResponse
 }
 
 
-message EnvDataRequest
+message SampleRequest
 {
 	int32 id = 1;
 }
 
-message EnvDataResponse
+message SampleResponse
 {
 	bytes observation = 1;
 	float reward = 2;
 	bool terminated = 3;
 	bool truncated = 4;
 	int32 episode = 5;
+	int32 status = 6;
 }
 
 
