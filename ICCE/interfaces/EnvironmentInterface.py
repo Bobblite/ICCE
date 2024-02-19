@@ -6,7 +6,7 @@ import time
 import threading
 
 class EnvironmentInterface:
-    def __init__(self, frequency_hz=240, max_episodes=1, time_between_episodes=3):
+    def __init__(self, frequency_hz=240, max_episodes=3, time_between_episodes=3):
         # Environment attributes
         self.n_observation: int # n_observation of an agent
         self.n_action: int # n_action of an agent
@@ -55,40 +55,28 @@ class EnvironmentInterface:
         # Reset simulation and pull initial data
         self._reset()
 
-        print(self.observations)
-
         # Start gRPC server
         self._endpoint.start()
         
-        # DEBUG COUNTER
-        i=0
         # Sample from Simulation as long as episode count not reached
         while(self.episode < self.max_episodes):
-            print(self.episode)
             # sample at fixed interval
             start = time.perf_counter()
                 
             # sample
             self._sample_data()
-            # DEBUG ONLY
-            i += 1
-            if i > 300:
-                self.term[0] = True
 
             # Check for end of episode
             if any(self.term) or any(self.trunc):
+                print("terminated")
                 # Sleep to allow time for ICCEs to sample this truncated observation
                 # TODO: Or maybe use status code to indicate term/trunc and wait for all ICCEs to acknoledge
                 # TODO-RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
                 time.sleep(self.time_between_episodes)
 
-                # Reset Environment
+                # Reset Simulation and environment
                 self._reset()
 
-                # Reset Simulation and environment
-                self.reset()
-
-                self.episode = self.max_episodes # DEBUG ONLY
                 # Increment episode count
                 self.episode += 1
 
@@ -104,13 +92,15 @@ class EnvironmentInterface:
         # TODO: Maybe wanna use Status code to indicate shutting down and wait for all ICCE to acknoledge?
         # TODO RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
         # TODO RE2: Anyways when ICCE invokes RPC but server doesnt respond, they get an error anyways
-        # Sleep to allow time for ICCEs to sample this shutdown status 
+        # Sleep to allow time for ICCEs to sample this shutdown status
+        print('Shutting down...')
         time.sleep(10)
         self._endpoint.shutdown()
 
     def _reset(self):
         # Reset Simulation
         self.reset()
+        print('reset')
         # Reset Environment
         self._sample_data()
 
@@ -227,7 +217,7 @@ class EnvironmentInterface:
         return agent_id
 
     def _on_sample(self, icce_id):
-        return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(Status.SUCCESS)
+        return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(self.status)
     
     def _add_icce(self, icce_id, agent_id):
         self.lock.acquire()

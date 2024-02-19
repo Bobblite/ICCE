@@ -21,6 +21,7 @@ class ICCEInterface:
         self.id = INVALID_ID
         self.status = Status.SUCCESS
         self.episode = 0
+        self.frequency_seconds = 1.0 / frequency_hz
 
         # Communication layer endpoint
         self._endpoint = ICCEEndpoint()
@@ -28,16 +29,22 @@ class ICCEInterface:
     def run(self):
         # Handshake with environment and validate I/O of model with environment - Blocking
         self._handshake_and_validate()
-        prev = time.perf_counter()
+
         # Main loop
         while self.status == Status.SUCCESS:
+            # sample at fixed interval
+            start = time.perf_counter()
             self._sample()
 
-            print(int(self.status))
+            # DEBUG ONLY
+            print(self.reward)
 
-            now = time.perf_counter()
-            print(now - prev)
-            prev = now
+            # Check interval
+            # delay = desired_interval - delta_time
+            delta = time.perf_counter() - start
+            delay = self.frequency_seconds - delta
+            if delay > 0: # positive delay -> faster than expected
+                time.sleep(delay)
 
         match(self.status):
             case Status.SHUTDOWN:
@@ -45,6 +52,7 @@ class ICCEInterface:
 
         
     def _handshake_and_validate(self) -> bool:
+        print("Handshake and validate\n----------")
         print(f"{self.n_observations}  {self.n_actions}")
 
         # Invoke RPC
