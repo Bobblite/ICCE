@@ -6,7 +6,7 @@ import time
 import threading
 
 class EnvironmentInterface:
-    def __init__(self, frequency_hz=240, max_episodes=3, time_between_episodes=3):
+    def __init__(self, frequency_hz=240, max_episodes=10, time_between_episodes=3, debug = False):
         # Environment attributes
         self.n_observation: int # n_observation of an agent
         self.n_action: int # n_action of an agent
@@ -23,6 +23,12 @@ class EnvironmentInterface:
         self.frequency_seconds = 1.0/frequency_hz
         self.max_episodes = max_episodes
         self.time_between_episodes = time_between_episodes
+
+        # Debug attributes
+        self.debug = debug
+        if self.debug:
+            self.debug_n = 1
+            self.cur_avg = 0.0
 
         # Maps between ICCE and Simulation Agents
         self._icce_to_sim_agent = {}
@@ -58,6 +64,37 @@ class EnvironmentInterface:
         # Start gRPC server
         self._endpoint.start()
         
+        # Main update loop -> Until max_episodes hit
+        self._update()
+        
+        # Set status to shutdown
+        self.status = Status.SHUTDOWN
+        # TODO: Maybe wanna use Status code to indicate shutting down and wait for all ICCE to acknoledge?
+        # TODO RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
+        # TODO RE2: Anyways when ICCE invokes RPC but server doesnt respond, they get an error anyways
+        # Sleep to allow time for ICCEs to sample this shutdown status
+        print('Shutting down...')
+        time.sleep(10)
+        self._endpoint.shutdown()
+
+    def _reset(self):
+        print('Resetting...')
+        # Print average delta
+        if self.debug:
+            self.debug_n = 1
+            self.cur_avg = 0.0
+
+        # Reset Simulation
+        self.reset()
+        # Reset Environment
+        self._sample_data()
+
+    def _sample_data(self):
+        with self.lock:
+            for icce_id in range(len(self.registered_agents)):
+                self.observations[icce_id], self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id] = self.sample(self.registered_agents[icce_id])
+
+    def _update(self):
         # Sample from Simulation as long as episode count not reached
         while(self.episode < self.max_episodes):
             # sample at fixed interval
@@ -68,11 +105,13 @@ class EnvironmentInterface:
 
             # Check for end of episode
             if any(self.term) or any(self.trunc):
-                print("terminated")
+                if self.debug:
+                    print(f'Average update delta time: {self.cur_avg} seconds')
+
                 # Sleep to allow time for ICCEs to sample this truncated observation
                 # TODO: Or maybe use status code to indicate term/trunc and wait for all ICCEs to acknoledge
                 # TODO-RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
-                time.sleep(self.time_between_episodes)
+                #time.sleep(self.time_between_episodes)
 
                 # Reset Simulation and environment
                 self._reset()
@@ -85,30 +124,11 @@ class EnvironmentInterface:
             delta = time.perf_counter() - start
             delay = self.frequency_seconds - delta
             if delay > 0: # positive delay -> faster than expected
-                time.sleep(delay)
+                time.sleep(delay) 
 
-        # Set status to shutdown
-        self.status = Status.SHUTDOWN
-        # TODO: Maybe wanna use Status code to indicate shutting down and wait for all ICCE to acknoledge?
-        # TODO RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
-        # TODO RE2: Anyways when ICCE invokes RPC but server doesnt respond, they get an error anyways
-        # Sleep to allow time for ICCEs to sample this shutdown status
-        print('Shutting down...')
-        time.sleep(10)
-        self._endpoint.shutdown()
-
-    def _reset(self):
-        # Reset Simulation
-        self.reset()
-        print('reset')
-        # Reset Environment
-        self._sample_data()
-
-    def _sample_data(self):
-        self.lock.acquire()
-        for icce_id in range(len(self.registered_agents)):
-            self.observations[icce_id], self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id] = self.sample(self.registered_agents[icce_id])
-        self.lock.release()
+            # Compute running average of delta
+            if self.debug:
+                self.cur_avg += (delta - self.cur_avg) / self.debug_n
 
     def register_agent(self, agent_id):
         self.registered_agents.append(agent_id)
@@ -198,30 +218,29 @@ class EnvironmentInterface:
 
     # HELPERS
     def _generate_icce_id(self) -> int:
-        self.lock.acquire()
-        if len(self._icce_to_sim_agent) >= len(self.registered_agents):
-            icce_id = INVALID_ID
-        else:
-            icce_id = (len(self._icce_to_sim_agent))
-        self.lock.release()
+        with self.lock:
+            if len(self._icce_to_sim_agent) >= len(self.registered_agents):
+                icce_id = INVALID_ID
+            else:
+                icce_id = (len(self._icce_to_sim_agent))
+
         return icce_id
     
     def _generate_agent_id(self) -> int:
         agent_id = INVALID_ID
-        self.lock.acquire()
-        for id in self.registered_agents:
-            if id not in self.active_agents:
-                agent_id = id
-                break
-        self.lock.release()
+        with self.lock:
+            for id in self.registered_agents:
+                if id not in self.active_agents:
+                    agent_id = id
+                    break
+
         return agent_id
 
     def _on_sample(self, icce_id):
         return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(self.status)
     
     def _add_icce(self, icce_id, agent_id):
-        self.lock.acquire()
-        self._icce_to_sim_agent.update({icce_id:agent_id})
-        self._sim_agent_to_icce.update({agent_id:icce_id})
-        self.lock.release()
+        with self.lock:
+            self._icce_to_sim_agent.update({icce_id:agent_id})
+            self._sim_agent_to_icce.update({agent_id:icce_id})
 
