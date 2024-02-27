@@ -18,7 +18,7 @@ class Simulation:
 
         # API
         self._sim_publisher = SimulationPublisher(self.sample, self.on_reset)
-        self.reset_flag = False
+        self.reset_flag = True
 
         # Mutex Lock
         self._lock = threading.Lock()
@@ -38,9 +38,9 @@ class Simulation:
             # Set simulation data
             actions = np.zeros(shape=(2, 4))
             actions[:, -1] = 1.0
-            obs, rewards, terminated, truncated, info = self.env.step(actions)
 
-            # self.observation, self.rewards, self.terminated, self.truncated, self.info = self.env.step(actions)
+            # Step environment
+            obs, rewards, terminated, truncated, info = self.env.step(actions)
             
             with self._lock:
                 self.observation = obs.copy()
@@ -51,31 +51,28 @@ class Simulation:
 
     def reset(self):
         # Reset env
-        obs, info = self.env.reset()
-
         with self._lock:
-            print('Resetting')
+            obs, info = self.env.reset()
+
             # Set initial simulation data
             self.observation = obs
             self.info = info
             self.truncated = np.full(shape=(2), fill_value=False, dtype=bool)
             self.terminated = np.full(shape=(2), fill_value=False, dtype=bool)
-
             self.reset_flag = False
-        return True
+            return True
     
     def sample(self, agent_id):
         # Get data
         with self._lock:
-            obs = self.observation[agent_id].copy()
+            obs_bytes = self.observation[agent_id].copy().tobytes()
             reward = self.rewards[agent_id]
             term = self.terminated[agent_id]
             trunc = self.truncated[agent_id]
 
-        return obs.tobytes(), reward, term, trunc
+        return obs_bytes, reward, term, trunc
 
     def on_reset(self):
-        print('Set reset flag')
         with self._lock:
             self.reset_flag = True
             

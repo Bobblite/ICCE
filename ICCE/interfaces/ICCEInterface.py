@@ -31,13 +31,24 @@ class ICCEInterface:
         self._handshake_and_validate()
 
         # Main loop
-        while self.status == Status.SUCCESS:
+        while True:
             # sample at fixed interval
             start = time.perf_counter()
             self._sample()
 
-            # DEBUG ONLY
-            print(self.reward)
+            match(self.status):
+                case Status.SUCCESS:
+                    # ICCE to act
+                    self.act()
+                    # Post sample - Learn/Remember, depends on algorithm
+                    self.post_sample()
+                case Status.DONE:
+                    print('end of episode...')
+                    self.post_episode()
+                    self.status = Status.WAIT # Wait for sample to retrieve status == SUCCESS
+                case Status.SHUTDOWN:
+                    print('shutting down...')
+                    exit(code=1)
 
             # Check interval
             # delay = desired_interval - delta_time
@@ -46,11 +57,17 @@ class ICCEInterface:
             if delay > 0: # positive delay -> faster than expected
                 time.sleep(delay)
 
-        match(self.status):
-            case Status.SHUTDOWN:
-                print('shutting down...')
+    # USER-DEFINED INTERFACES
+    def act(self):
+        raise NotImplementedError("Functionality to infer actions must be defined!")
 
+    def post_sample(self):
+        pass
+
+    def post_episode(self):
+        pass
         
+    # HELPERS
     def _handshake_and_validate(self) -> bool:
         print("Handshake and validate\n----------")
         print(f"{self.n_observations}  {self.n_actions}")
@@ -90,5 +107,10 @@ class ICCEInterface:
         self.term = response.terminated
         self.trunc = response.truncated
         self.episode = response.episode
-        self.status = Status(response.status)
+        # If post_episode() executed (moved to WAIT), do not set status back to DONE
+        status = Status(response.status)
+        if status == Status.DONE and self.status == Status.WAIT:
+            return
+        self.status = status
+
 

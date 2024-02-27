@@ -66,7 +66,7 @@ authors = [
 #
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
-# dependencies = [ # Optional ]
+dependencies = ["grpcio", "grpcio-tools", "numpy"]
 
 # The following would provide a command line executable called `sample`
 # which executes the function `main` from this package when invoked.

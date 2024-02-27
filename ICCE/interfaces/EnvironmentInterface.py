@@ -69,9 +69,6 @@ class EnvironmentInterface:
         
         # Set status to shutdown
         self.status = Status.SHUTDOWN
-        # TODO: Maybe wanna use Status code to indicate shutting down and wait for all ICCE to acknoledge?
-        # TODO RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
-        # TODO RE2: Anyways when ICCE invokes RPC but server doesnt respond, they get an error anyways
         # Sleep to allow time for ICCEs to sample this shutdown status
         print('Shutting down...')
         time.sleep(10)
@@ -85,9 +82,13 @@ class EnvironmentInterface:
             self.cur_avg = 0.0
 
         # Reset Simulation
-        self.reset()
-        # Reset Environment
-        self._sample_data()
+        status = self.reset()
+
+        if status:
+            # Reset Environment
+            self._sample_data()
+            self.status = Status.SUCCESS
+
 
     def _sample_data(self):
         with self.lock:
@@ -99,7 +100,7 @@ class EnvironmentInterface:
         while(self.episode < self.max_episodes):
             # sample at fixed interval
             start = time.perf_counter()
-                
+
             # sample
             self._sample_data()
 
@@ -108,10 +109,11 @@ class EnvironmentInterface:
                 if self.debug:
                     print(f'Average update delta time: {self.cur_avg} seconds')
 
+                # Set status code to indicate term/trunc
+                self.status = Status.DONE
+
                 # Sleep to allow time for ICCEs to sample this truncated observation
-                # TODO: Or maybe use status code to indicate term/trunc and wait for all ICCEs to acknoledge
-                # TODO-RE: Maybe not, as we want simulation to keep running regardless of number of ICCEs
-                #time.sleep(self.time_between_episodes)
+                time.sleep(self.time_between_episodes)
 
                 # Reset Simulation and environment
                 self._reset()
@@ -146,7 +148,7 @@ class EnvironmentInterface:
             None
 
         Returns:
-            None
+            A boolean indicating the success(True) or failure(False) of the reset.
 
         Raises:
             NotImplementedError: If this function is not implemented by the interfacing Environment.

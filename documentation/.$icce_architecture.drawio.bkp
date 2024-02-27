@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-02-16T05:35:57.305Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="u2rgIAU-uehq_-PicPFn" version="23.0.2" type="device" pages="5">
+<mxfile host="Electron" modified="2024-02-26T07:49:44.215Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.11 Chrome/114.0.5735.289 Electron/25.9.8 Safari/537.36" etag="bRavdMoEkWggxzXnEAFx" version="22.1.11" type="device" pages="5">
   <diagram name="Whiteboarding" id="PH9AvSR1vEmLvbtoWM6F">
-    <mxGraphModel dx="3728" dy="843" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0">
+    <mxGraphModel dx="3088" dy="843" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="none" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -988,7 +988,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="jGMnk2QppMrzI8oRtYJQ" name="ICCE Sequence Diagram v2">
-    <mxGraphModel dx="2074" dy="843" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2336" pageHeight="1654" math="0" shadow="0">
+    <mxGraphModel dx="989" dy="581" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2336" pageHeight="1654" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1163,7 +1163,7 @@
             <mxPoint x="-25" y="-9" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ft9vn4uK1neBonbsc_pe-1" value="" style="group" vertex="1" connectable="0" parent="1">
+        <mxCell id="ft9vn4uK1neBonbsc_pe-1" value="" style="group" parent="1" vertex="1" connectable="0">
           <mxGeometry x="543" y="880" width="1250" height="510" as="geometry" />
         </mxCell>
         <mxCell id="5mJ8cLjP2c_PkGPaiOHK-2" value="" style="endArrow=open;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;endFill=0;" parent="ft9vn4uK1neBonbsc_pe-1" edge="1">
@@ -1187,7 +1187,7 @@
             <mxPoint x="583.9999999999995" y="62" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="5mJ8cLjP2c_PkGPaiOHK-5" value="«&lt;i style=&quot;border-color: var(--border-color);&quot;&gt;gRPC&lt;/i&gt;»&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;get_env_data(icce_id)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="5mJ8cLjP2c_PkGPaiOHK-4" vertex="1" connectable="0">
+        <mxCell id="5mJ8cLjP2c_PkGPaiOHK-5" value="«&lt;i style=&quot;border-color: var(--border-color);&quot;&gt;gRPC&lt;/i&gt;»&lt;br style=&quot;border-color: var(--border-color);&quot;&gt;sample(icce_id)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="5mJ8cLjP2c_PkGPaiOHK-4" vertex="1" connectable="0">
           <mxGeometry x="-0.0952" y="-2" relative="1" as="geometry">
             <mxPoint x="-6" y="-13" as="offset" />
           </mxGeometry>
@@ -1213,7 +1213,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="gs3EN61fvKw-52jqCWq--2" value="train(observation, reward) /&lt;br&gt;act(observation)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="gs3EN61fvKw-52jqCWq--1" vertex="1" connectable="0">
+        <mxCell id="gs3EN61fvKw-52jqCWq--2" value="train(observation, reward)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="gs3EN61fvKw-52jqCWq--1" vertex="1" connectable="0">
           <mxGeometry x="-0.312" y="1" relative="1" as="geometry">
             <mxPoint x="69" y="13" as="offset" />
           </mxGeometry>
@@ -1282,7 +1282,7 @@
             <mxPoint x="21" y="-7" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="e7LZRL3VvKPChS7eORmG-7" value="" style="endArrow=none;dashed=1;html=1;strokeWidth=1;rounded=0;exitX=0.105;exitY=0.039;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.59;entryDx=0;entryDy=0;entryPerimeter=0;fontStyle=1" parent="ft9vn4uK1neBonbsc_pe-1" edge="1" source="e7LZRL3VvKPChS7eORmG-8">
+        <mxCell id="e7LZRL3VvKPChS7eORmG-7" value="" style="endArrow=none;dashed=1;html=1;strokeWidth=1;rounded=0;exitX=0.105;exitY=0.039;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.59;entryDx=0;entryDy=0;entryPerimeter=0;fontStyle=1" parent="ft9vn4uK1neBonbsc_pe-1" source="e7LZRL3VvKPChS7eORmG-8" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="50" y="260" as="sourcePoint" />
             <mxPoint x="1210" y="260" as="targetPoint" />
@@ -1354,7 +1354,7 @@
         <mxCell id="e7LZRL3VvKPChS7eORmG-23" value="" style="shape=umlDestroy;whiteSpace=wrap;html=1;strokeWidth=3;targetShapes=umlLifeline;" parent="ft9vn4uK1neBonbsc_pe-1" vertex="1">
           <mxGeometry x="205" y="450" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="ft9vn4uK1neBonbsc_pe-4" value="" style="group" vertex="1" connectable="0" parent="1">
+        <mxCell id="ft9vn4uK1neBonbsc_pe-4" value="" style="group" parent="1" vertex="1" connectable="0">
           <mxGeometry x="548" y="582" width="765" height="280" as="geometry" />
         </mxCell>
         <mxCell id="nCHeUPGv8pPNl5oHLSH1-15" value="loop" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;width=50;height=20;" parent="ft9vn4uK1neBonbsc_pe-4" vertex="1">
