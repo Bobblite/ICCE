@@ -38,7 +38,8 @@ class EnvironmentInterface:
         # Communication layer endpoint
         self._endpoint = EnvironmentEndpoint(
             handshake_cb=self._on_handshake_and_validate,
-            sample_cb=self._on_sample
+            sample_cb=self._on_sample,
+            act_cb=self._on_act
         )
 
         # Mutex lock
@@ -51,9 +52,9 @@ class EnvironmentInterface:
     def run(self):
         """ Starts the environment. """
         # Instantiate environment data
-        self.observations = np.ndarray(shape=(len(self.registered_agents), self.n_observation), dtype=np.float32)
+        self.observations = np.ndarray(shape=(len(self.registered_agents), self.n_observation), dtype=np.float64)
         self.actions = np.ndarray(shape=(len(self.registered_agents), self.n_action), dtype=np.float32)
-        self.rewards = np.ndarray(shape=(len(self.registered_agents)), dtype=np.float32)
+        self.rewards = np.ndarray(shape=(len(self.registered_agents)), dtype=np.float64)
         self.term = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
         self.trunc = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
         self.info = [{} for _ in range(len(self.registered_agents))]
@@ -88,7 +89,6 @@ class EnvironmentInterface:
             # Reset Environment
             self._sample_data()
             self.status = Status.SUCCESS
-
 
     def _sample_data(self):
         with self.lock:
@@ -241,6 +241,11 @@ class EnvironmentInterface:
     def _on_sample(self, icce_id):
         return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(self.status)
     
+    def _on_act(self, icce_id, action_bytes):
+        action = np.frombuffer(buffer=action_bytes, dtype=np.float32)
+        status = self.act(agent_id=self._icce_to_sim_agent[icce_id], action=action)
+        return status
+
     def _add_icce(self, icce_id, agent_id):
         with self.lock:
             self._icce_to_sim_agent.update({icce_id:agent_id})

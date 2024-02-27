@@ -39,7 +39,7 @@ class ICCEInterface:
             match(self.status):
                 case Status.SUCCESS:
                     # ICCE to act
-                    self.act()
+                    self._act()
                     # Post sample - Learn/Remember, depends on algorithm
                     self.post_sample()
                 case Status.DONE:
@@ -59,6 +59,8 @@ class ICCEInterface:
 
     # USER-DEFINED INTERFACES
     def act(self):
+        """ Happens before sampling
+        """
         raise NotImplementedError("Functionality to infer actions must be defined!")
 
     def post_sample(self):
@@ -112,5 +114,13 @@ class ICCEInterface:
         if status == Status.DONE and self.status == Status.WAIT:
             return
         self.status = status
+
+    def _act(self):
+        # Call user-defined act() which sets self.action
+        self.act()
+
+        # Invoke RPC
+        response = self._endpoint.act(id=self.id, action=self.action.tobytes())
+        return response.status
 
 

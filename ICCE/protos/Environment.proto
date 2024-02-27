@@ -6,7 +6,7 @@ service Environment
 {
 	rpc handshake_and_validate(HandshakeRequest) returns (HandshakeResponse){}
 	rpc sample(SampleRequest) returns (SampleResponse){}
-	rpc set_action_data(ActionRequest) returns (ActionResponse){}
+	rpc act(ActionRequest) returns (ActionResponse){}
 }
 
 
@@ -42,18 +42,10 @@ message SampleResponse
 message ActionRequest
 {
 	int32 id = 1;
+	bytes action = 2;
 }
 
 message ActionResponse
 {
 	int32 status = 1;
-}
-
-
-message EnvData {
-	bytes observation = 1;
-	float reward = 2;
-	bool terminated = 3;
-	bool truncated = 4;
-	int32 episode = 5;
 }

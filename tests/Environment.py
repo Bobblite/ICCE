@@ -30,12 +30,16 @@ class Environment(EnvironmentInterface):
         print('reset env: ', self.i)
         self.i+=1
         return response.status
+    
+    def act(self, agent_id, action):
+        #pass
+        print(f"Agent {agent_id} action received: {action}")
 
 
 def main():
     env = Environment()
     env.register_agent(0)     # HIL Agent
-    env.register_agent(1)       # ICCE Agent
+    env.register_agent(1)     # ICCE Agent
     env.run()
     
 if __name__ == '__main__':

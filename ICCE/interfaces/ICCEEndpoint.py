@@ -17,6 +17,6 @@ class ICCEEndpoint():
         icce_data = Environment_pb2.SampleRequest(id=id)
         return self._stub.sample(icce_data)
     
-    def set_action_data(self, id: int):
-        action_req = Environment_pb2.ActionRequest(id=id)
-        return self._stub.set_action_data(action_req)
+    def act(self, id: int, action: bytes):
+        request = Environment_pb2.ActionRequest(id=id, action=action)
+        return self._stub.act(request)

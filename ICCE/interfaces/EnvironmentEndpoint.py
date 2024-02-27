@@ -5,11 +5,12 @@ import threading
 from concurrent import futures
 
 class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
-    def __init__(self, handshake_cb, sample_cb):
+    def __init__(self, handshake_cb, sample_cb, act_cb):
         super().__init__()
         # Store callbacks
         self._on_handshake_and_validate = handshake_cb
         self._sample_cb = sample_cb
+        self._act_cb = act_cb
 
     def handshake_and_validate(self, request, context):
         """ Servicer implementation of handshake_and_validate.
@@ -46,21 +47,20 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
         response.status = status
         return response
         
-    
-    def set_action_data(self, request, context):
-        print('set_action_data called by ICCE ', request.id)
+    def act(self, request, context):
+        self._act_cb(icce_id=request.id, action_bytes=request.action)
         response = Environment_pb2.ActionResponse(status=1)
         return response
     
 
 class EnvironmentEndpoint():
-    def __init__(self, handshake_cb, sample_cb):
+    def __init__(self, handshake_cb, sample_cb, act_cb):
         # gRPC server
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._server_thread = threading.Thread(target=self.start_server)
 
         # Environment servicer
-        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, sample_cb=sample_cb)
+        self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, sample_cb=sample_cb, act_cb=act_cb)
 
         Environment_pb2_grpc.add_EnvironmentServicer_to_server(self._servicer, self._server)
         self._server.add_insecure_port('localhost:50051')
