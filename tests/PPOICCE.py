@@ -18,7 +18,6 @@ class PPOICCE(ICCEInterface):
 
     def act(self):
         self.action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
-        return True
         
 
 def main():

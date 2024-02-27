@@ -64,10 +64,10 @@ class ICCEInterface:
         raise NotImplementedError("Functionality to infer actions must be defined!")
 
     def post_sample(self):
-        pass
+        raise NotImplementedError("Functionality to infer actions must be defined!")
 
     def post_episode(self):
-        pass
+        raise NotImplementedError("Functionality to infer actions must be defined!")
         
     # HELPERS
     def _handshake_and_validate(self) -> bool:
@@ -120,7 +120,6 @@ class ICCEInterface:
         self.act()
 
         # Invoke RPC
-        response = self._endpoint.act(id=self.id, action=self.action.tobytes())
-        return response.status
+        _ = self._endpoint.act(id=self.id, action=self.action.tobytes())
 
 

@@ -15,9 +15,10 @@ class Simulation:
         self.truncated = np.full(shape=(2), fill_value=False, dtype=bool)
         self.terminated = np.full(shape=(2), fill_value=False, dtype=bool)
         self.info = None # TODO
+        self.action = np.zeros(shape=(2, 4), dtype=np.float32)
 
         # API
-        self._sim_publisher = SimulationPublisher(self.sample, self.on_reset)
+        self._sim_publisher = SimulationPublisher(sample_cb=self.on_sample, act_cb=self.on_act, reset_cb=self.on_reset)
         self.reset_flag = True
 
         # Mutex Lock
@@ -36,11 +37,11 @@ class Simulation:
                 self.reset()
 
             # Set simulation data
-            actions = np.zeros(shape=(2, 4))
-            actions[:, -1] = 1.0
+            # actions = np.zeros(shape=(2, 4))
+            # actions[:, -1] = 1.0
 
             # Step environment
-            obs, rewards, terminated, truncated, info = self.env.step(actions)
+            obs, rewards, terminated, truncated, info = self.env.step(self.action)
             
             with self._lock:
                 self.observation = obs.copy()
@@ -62,15 +63,17 @@ class Simulation:
             self.reset_flag = False
             return True
     
-    def sample(self, agent_id):
+    def on_sample(self, agent_id):
         # Get data
         with self._lock:
             obs_bytes = self.observation[agent_id].copy().tobytes()
             reward = self.rewards[agent_id]
             term = self.terminated[agent_id]
             trunc = self.truncated[agent_id]
-
         return obs_bytes, reward, term, trunc
+
+    def on_act(self, agent_id, action_bytes):
+        self.action[agent_id] = np.frombuffer(buffer=action_bytes, dtype=np.float32)
 
     def on_reset(self):
         with self._lock:

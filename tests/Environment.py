@@ -32,8 +32,7 @@ class Environment(EnvironmentInterface):
         return response.status
     
     def act(self, agent_id, action):
-        #pass
-        print(f"Agent {agent_id} action received: {action}")
+        self._sim_listener.act(agent_id, action.tobytes())
 
 
 def main():
