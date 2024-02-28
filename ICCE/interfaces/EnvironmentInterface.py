@@ -49,8 +49,26 @@ class EnvironmentInterface:
     def active_agents(self):
         return self._sim_agent_to_icce.keys()
 
+
+    ########## KEY FUNCTIONALITIES ##########
     def run(self):
-        """ Starts the environment. """
+        """ Runs the environment.
+        
+        Refer to the Sequence Diagram for a clearer picture. The flow of the Environment is as such:
+
+        Environment resets the Simulation using the user-defined interface `reset()`
+        {Ad-hoc} Environment validates ICCE input/output sizes, assigns ICCE IDs and maps Simulation Agent ID to ICCE ID
+        Loop while episode count < max episodes (frequency-bound):
+            Samples simulation data from Simulation -> Compute Observations, Rewards, Terminated, Truncated, Info of ALL ICCEs
+            {Ad-hoc} Sets simulation agent actions in Simulation when RPC is invoked by ICCE clients
+            if episode is terminated/truncated:
+                sleep() to allow icce client to sample the end of episode
+                resets the environment and simulation
+        Shutdown the environment
+
+        Raises:
+            NotImplementedError: If any combination of interfaces, reset(), sample(), act(), is not implemented by user.
+        """
         # Instantiate environment data
         self.observations = np.ndarray(shape=(len(self.registered_agents), self.n_observation), dtype=np.float64)
         self.actions = np.ndarray(shape=(len(self.registered_agents), self.n_action), dtype=np.float32)
@@ -75,8 +93,27 @@ class EnvironmentInterface:
         time.sleep(10)
         self._endpoint.shutdown()
 
+    def register(self, agent_id):
+        """ Registers a Simulation agent.
+
+        Agents are to be registered before run() is called by passing an identifier which is recognized by the Simulations as an argument. By
+        registering agents, the Environment will pull Simulation data and compute Environment data via the user-defined interface
+        sample(). The order of registration denotes the ICCE ID of that agent.
+
+        Args:
+            agent_id : The identifier of the agent recognized by the Simulation.
+        """
+        self.registered_agents.append(agent_id)
+
     def _reset(self):
-        print('Resetting...')
+        """ Resets the Simulation and Environment
+
+        Calls the user-defined interface reset() which resets the Simulation. Resets the environment and computes the
+        initial environment data by sampling the Simulation.
+
+        Raises:
+            NotImplementedError: If user-defined interfaces reset() is not implemented.
+        """
         # Print average delta
         if self.debug:
             self.debug_n = 1
@@ -91,11 +128,28 @@ class EnvironmentInterface:
             self.status = Status.SUCCESS
 
     def _sample_data(self):
+        """ Samples and computes Environment data for all simulation agents.
+
+        Samples the Simulation for simulation agent data and compute into Environment data
+        (Observation, Reward, Terminated, Truncated, Info) and consolidates all agents' Environment
+        data into one repository for ICCE clients to sample.
+
+        Raises:
+            NotImplementedError: If user-defined interface, sample(), is not implemeted by the user.
+        """
         with self.lock:
             for icce_id in range(len(self.registered_agents)):
                 self.observations[icce_id], self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id] = self.sample(self.registered_agents[icce_id])
 
     def _update(self):
+        """ Main update loop.
+
+        Main update loops which handles retrieving Environment Data from the Simulation at a sampling rate. Also
+        handles end-of-episode (term/trunc) and sets the Environment's status code for ICCEs to sample.
+
+        Raises:
+            NotImplementedError: If user-defined interfaces, sample() and/or reset(), are not defined by the user.
+        """
         # Sample from Simulation as long as episode count not reached
         while(self.episode < self.max_episodes):
             # sample at fixed interval
@@ -132,17 +186,13 @@ class EnvironmentInterface:
             if self.debug:
                 self.cur_avg += (delta - self.cur_avg) / self.debug_n
 
-    def register_agent(self, agent_id):
-        self.registered_agents.append(agent_id)
-    
-    # Interfaces
-    def start(self) -> int:
-        raise NotImplementedError('Functionality to start the simulation must be defined!')
 
+    ########## USER-DEFINED INTERFACES ##########
     def reset(self):
-        """ {MUST BE DEFINED} Interface to reset the simulation.
+        """ Interface to reset the simulation.
         
-        This is an interface function which resets the simulation.
+        {USER-DEFINED} This is an interface which acts as a callback in run() used to reset the Simulation to an initial state,
+        ready for the next episode.
 
         Args:
             None
@@ -156,13 +206,13 @@ class EnvironmentInterface:
         raise NotImplementedError('Functionality to reset environment must be defined!')
     
     def sample(self, agent_id: int) -> tuple[np.ndarray, float, bool, bool, dict]:
-        """ {MUST BE DEFINED} Interface to pull environment data from the simulation.
+        """ Interface to pull environment data from the Simulation.
         
-        This is an interface function which retrieves simulation data for the specified Simulation Agent and converts it
+        {MUST BE DEFINED} This is an interface function which retrieves simulation data for the specified Simulation Agent and converts it
         into environment data: observation, reward, term, trunc, info.
 
         Args:
-            agent_id : The ID of the Sim Agent to sample.
+            agent_id : The ID of the Simulation Agent to sample.
 
         Returns:
             observation, reward, term, trunc, info of the specified Sim Agent.
@@ -173,9 +223,21 @@ class EnvironmentInterface:
         raise NotImplementedError('Functionality to retrieve environment data from Simulation must be defined!')
     
     def act(self, agent_id, action):
+        """ Interface to set the action of an Agent in the Simulation.
+
+        {MUST BE DEFINED} This is an interface function which sets the action of the specified Simulation Agent.
+
+        Args:
+            agent_id : The ID of the Simulation Agent to set the action of.
+            action : The action of the Simulation as provided by the ICCE as an ndarray.
+
+        Raises:
+            NotImplementedError: If this function is not implemented by the interfacing Environment.
+        """
         raise NotImplementedError('Functionality to set action for simulation agent must be defined!')
     
-    # Core callbacks
+
+    ########## CORE CALLBACKS ##########
     def _on_handshake_and_validate(self, n_observation: int, n_actions: int) -> tuple[int, Status]:
         """ Callback function used to generate ICCE ID and validate observation/action spaces.
         
@@ -189,9 +251,6 @@ class EnvironmentInterface:
 
         Returns:
             The generated ICCE ID based on the defined interface and the validation status.
-
-        Raises:
-            None
         """
         # I/O validation
         if (self.n_observation != n_observation):
@@ -217,9 +276,49 @@ class EnvironmentInterface:
             print(f"{agent} : {self._sim_agent_to_icce[agent]}")
 
         return icce_id, Status.SUCCESS
+    
+    def _on_sample(self, icce_id):
+        """ Retrieves the environment data of a specified ICCE agent.
 
-    # HELPERS
+        Callback function to sample the environment data (Observation, Reward, Terminated, Truncated, Info) of a specified ICCE, 
+        as well as the status of the environment (SUCCESS/DONE/WAIT). This funciton is called by the gRPC endpoint when the relevant
+        RPC is invoked.
+
+        Args:
+            icce_id : The ID of the ICCE to sample.
+
+        Returns:
+            Observation (in bytes), Reward, Term, Trunc, Status of the ICCE.
+        """
+        return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(self.status)
+    
+    def _on_act(self, icce_id, action_bytes):
+        """ Sets the action of a Simulation agent using the ICCE ID.
+
+        Callback function to set the action of a Simulation agent. The action data is received from the ICCE client and the ICCE ID
+        of the client is mapped to the Simulation Agent's ID. The action is then set by callin the user-defined interface act() to
+        set the action of the agent in the Simulation.
+
+        icce_id : The ID of the ICCE which is mapped to a Simulation Agent's ID.
+        action_bytes : The requested action in bytes which is to be converted to an ndarray.
+
+        Returns:
+            Status of setting the action.
+        """
+        action = np.frombuffer(buffer=action_bytes, dtype=np.float32)
+        status = self.act(agent_id=self._icce_to_sim_agent[icce_id], action=action)
+        return status
+
+
+    ########## HELPERS ##########
     def _generate_icce_id(self) -> int:
+        """ Helper func to generate an ICCE ID.
+
+        Generates an unused ICCE ID.
+
+        Returns:
+            The generated ICCE ID.
+        """
         with self.lock:
             if len(self._icce_to_sim_agent) >= len(self.registered_agents):
                 icce_id = INVALID_ID
@@ -229,6 +328,14 @@ class EnvironmentInterface:
         return icce_id
     
     def _generate_agent_id(self) -> int:
+        """ Helper func to retrieves an unused Agent ID.
+
+        Returns an unused Agent ID that has not been mapped. The Agent IDs are retrieved from the list of
+        registered agents.
+
+        Returns:
+            An unmapped Agent ID
+        """
         agent_id = INVALID_ID
         with self.lock:
             for id in self.registered_agents:
@@ -237,17 +344,17 @@ class EnvironmentInterface:
                     break
 
         return agent_id
-
-    def _on_sample(self, icce_id):
-        return self.observations[icce_id].tobytes(), self.rewards[icce_id], self.term[icce_id], self.trunc[icce_id], self.info[icce_id], int(self.status)
     
-    def _on_act(self, icce_id, action_bytes):
-        action = np.frombuffer(buffer=action_bytes, dtype=np.float32)
-        status = self.act(agent_id=self._icce_to_sim_agent[icce_id], action=action)
-        return status
-
     def _add_icce(self, icce_id, agent_id):
+        """ Helper func to map ICCE IDs to Agent IDs and vice-versa
+        
+            Args:
+                icce_id : The ID of the ICCE.
+                agent_id : The ID of the Simulation agent.
+        """
+        
         with self.lock:
             self._icce_to_sim_agent.update({icce_id:agent_id})
             self._sim_agent_to_icce.update({agent_id:icce_id})
+    
 

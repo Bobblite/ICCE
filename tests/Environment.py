@@ -37,8 +37,8 @@ class Environment(EnvironmentInterface):
 
 def main():
     env = Environment()
-    env.register_agent(0)     # HIL Agent
-    env.register_agent(1)     # ICCE Agent
+    env.register(0)     # HIL Agent
+    env.register(1)     # ICCE Agent
     env.run()
     
 if __name__ == '__main__':
