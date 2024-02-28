@@ -11,7 +11,6 @@ class ICCEInterface:
         self.n_observation: int
         self.n_action: int
         self.observation : np.ndarray
-        self.action: np.ndarray
         self.reward: float
         self.term: bool
         self.trunc: bool
@@ -27,25 +26,49 @@ class ICCEInterface:
         self._endpoint = ICCEEndpoint()
 
     def run(self):
+        """ Runs the ICCE client.
+
+        Refer to the Sequence Diagram for a clearer picture. The flow of the ICCE client is
+
+        ICCE handshakes with the Environment, validating its input/output sizes, and assigns an ICCE ID
+        Samples the Environment for initial environment data (Observation, Reward, Terminated, Truncated, Info)
+        Loop while the Environment does not shut down (frequency-bound):
+            Calls act() user-defined interface to take an action in the Simulation
+            Samples the Environment for environment data after taking action
+            Calls post_sample() user-defined interface to run behaviors after taking an action in the simulation
+            If received end-of-episode, calls user-defined interface post_episode to run behaviours after the end of an episode
+
+        Raises:
+            NotImplementedError: If user-defined interfaces, act(), post_sample(), post_episode(), are not implemented by the interfacing ICCE.
+        """
         # Handshake with environment and validate I/O of model with environment - Blocking
         self._handshake_and_validate()
+
+        # Pull initial data
+        self._sample()
 
         # Main loop
         while True:
             # sample at fixed interval
             start = time.perf_counter()
-            self._sample()
 
             match(self.status):
                 case Status.SUCCESS:
                     # ICCE to act
                     self._act()
+
+                    # Sample the environment after taking an action
+                    self._sample()
+
                     # Post sample - Learn/Remember, depends on algorithm
-                    self.post_sample()
+                    self.post_sample(observation=self.observation, reward=self.reward)
                 case Status.DONE:
                     print('end of episode...')
                     self.post_episode()
                     self.status = Status.WAIT # Wait for sample to retrieve status == SUCCESS
+                case Status.WAIT:
+                    # Continue sampling for status change to SUCCESS
+                    self._sample()
                 case Status.SHUTDOWN:
                     print('shutting down...')
                     exit(code=1)
@@ -58,15 +81,35 @@ class ICCEInterface:
                 time.sleep(delay)
 
     # USER-DEFINED INTERFACES
-    def act(self):
-        """ Happens before sampling
+    def act(self, observation: np.ndarray) -> np.ndarray:
+        """ Sets the action of the Simulation agent.
+
+        {USER-DEFINED} This is an interface which is used to set the self.action attribute in the ICCE.
+
+        Raises:
+            NotImplementedError: If this function is not implemented by the interfacing ICCE.
         """
         raise NotImplementedError("Functionality to infer actions must be defined!")
 
-    def post_sample(self):
+    def post_sample(self, observation: np.ndarray, reward: float):
+        """ User-defined behaviour after sampling the Environment.
+
+        This function is called after taking an action in the environment and sampling the environment after. Examples of use cases
+        of this function is to allow the RL agent to learn using the new observations and reward after taking an action.
+
+        Raises:
+            NotImplementedError: If this function is not implemented by the interfacing ICCE.
+        """
         raise NotImplementedError("Functionality to infer actions must be defined!")
 
     def post_episode(self):
+        """ User-defined behaviour after an episode terminates/truncates.
+
+        This function is called after receiving a signal from the Environment indicating that the episode has terminated/truncated.
+
+        Raises:
+            NotImplementedError: If this function is not implemented by the interfacing ICCE.
+        """
         raise NotImplementedError("Functionality to infer actions must be defined!")
         
     # HELPERS
@@ -117,9 +160,9 @@ class ICCEInterface:
 
     def _act(self):
         # Call user-defined act() which sets self.action
-        self.act()
+        action = self.act(self.observation)
 
         # Invoke RPC
-        _ = self._endpoint.act(id=self.id, action=self.action.tobytes())
+        _ = self._endpoint.act(id=self.id, action=action.tobytes())
 
 

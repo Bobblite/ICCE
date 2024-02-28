@@ -9,35 +9,35 @@ class HILICCE(ICCEInterface):
         super().__init__(frequency_hz=120)
         self.n_observations = 30
         self.n_actions = 4
-        self.action = np.zeros(shape=(4), dtype=np.float32)
         self.inputManager = InputManager()
         
 
-    def post_sample(self):
+    def post_sample(self, observation: np.ndarray, reward: float):
         pass
 
     def post_episode(self):
         pass
 
-    def act(self):
-        self.action = np.zeros(shape=(4), dtype=np.float32)
-        self.handle_inputs()
+    def act(self, observation: np.ndarray) -> np.ndarray:
+        return self.handle_inputs()
 
     def handle_inputs(self):
         # Reset actions
-        action = np.zeros(4)
+        action = np.zeros(shape=(4), dtype=np.float32)
 
         # Handle inputs
         if (self.inputManager.isPressed(Key.left)):
-            self.action[0] -= 1.0
+            action[0] -= 1.0
         if (self.inputManager.isPressed(Key.right)):
-            self.action[0] += 1.0
+            action[0] += 1.0
         if (self.inputManager.isPressed(Key.down)):
-            self.action[1] -= 1.0
+            action[1] -= 1.0
         if (self.inputManager.isPressed(Key.up)):
-            self.action[1] += 1.0
+            action[1] += 1.0
         if (self.inputManager.isPressed(Key.space)):
-            self.action[3] = 1.0
+            action[3] = 1.0
+        
+        return action
 
 def main():
     icce = HILICCE()

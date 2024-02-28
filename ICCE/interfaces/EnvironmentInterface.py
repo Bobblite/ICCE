@@ -54,16 +54,16 @@ class EnvironmentInterface:
     def run(self):
         """ Runs the environment.
         
-        Refer to the Sequence Diagram for a clearer picture. The flow of the Environment is as such:
+        Refer to the Sequence Diagram for a clearer picture. The flow of the Environment is
 
-        Environment resets the Simulation using the user-defined interface `reset()`
-        {Ad-hoc} Environment validates ICCE input/output sizes, assigns ICCE IDs and maps Simulation Agent ID to ICCE ID
-        Loop while episode count < max episodes (frequency-bound):
-            Samples simulation data from Simulation -> Compute Observations, Rewards, Terminated, Truncated, Info of ALL ICCEs
-            {Ad-hoc} Sets simulation agent actions in Simulation when RPC is invoked by ICCE clients
-            if episode is terminated/truncated:
-                sleep() to allow icce client to sample the end of episode
-                resets the environment and simulation
+        Environment resets the Simulation using the user-defined interface `reset()`\n
+        {Ad-hoc} Environment validates ICCE input/output sizes, assigns ICCE IDs and maps Simulation Agent ID to ICCE ID\n
+        Loop while episode count < max episodes (frequency-bound):\n
+            Samples simulation data from Simulation -> Compute Observations, Rewards, Terminated, Truncated, Info of ALL ICCEs\n
+            {Ad-hoc} Sets simulation agent actions in Simulation when RPC is invoked by ICCE clients\n
+            if episode is terminated/truncated:\n
+                sleep() to allow icce client to sample the end of episode\n
+                resets the environment and simulation\n
         Shutdown the environment
 
         Raises:
@@ -191,7 +191,7 @@ class EnvironmentInterface:
     def reset(self):
         """ Interface to reset the simulation.
         
-        {USER-DEFINED} This is an interface which acts as a callback in run() used to reset the Simulation to an initial state,
+        {USER-DEFINED} This is an interface which is used to reset the Simulation to an initial state,
         ready for the next episode.
 
         Args:

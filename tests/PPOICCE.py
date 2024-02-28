@@ -8,16 +8,15 @@ class PPOICCE(ICCEInterface):
         self.n_observations = 30
         self.n_actions = 4
 
-    def post_sample(self):
+    def post_sample(self, observation: np.ndarray, reward: float):
         print('post_sample()')
-        obs = self.observation
-        reward = self.reward
 
     def post_episode(self):
         print('post_episode()')
 
-    def act(self):
-        self.action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+    def act(self, observation: np.ndarray) -> np.ndarray:
+        print('act()')
+        return np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
         
 
 def main():
