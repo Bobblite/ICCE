@@ -28,7 +28,7 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
         Raises:
             None
         """
-        id, status = self._on_handshake_and_validate(request.n_observations, request.n_actions)
+        id, status = self._on_handshake_and_validate(request.n_observations, request.n_actions, request.agent_hint)
         response = Environment_pb2.HandshakeResponse(id=id, status=int(status))
         return response
     

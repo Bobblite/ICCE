@@ -5,12 +5,14 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class HandshakeRequest(_message.Message):
-    __slots__ = ("n_observations", "n_actions")
+    __slots__ = ("n_observations", "n_actions", "agent_hint")
     N_OBSERVATIONS_FIELD_NUMBER: _ClassVar[int]
     N_ACTIONS_FIELD_NUMBER: _ClassVar[int]
+    AGENT_HINT_FIELD_NUMBER: _ClassVar[int]
     n_observations: int
     n_actions: int
-    def __init__(self, n_observations: _Optional[int] = ..., n_actions: _Optional[int] = ...) -> None: ...
+    agent_hint: int
+    def __init__(self, n_observations: _Optional[int] = ..., n_actions: _Optional[int] = ..., agent_hint: _Optional[int] = ...) -> None: ...
 
 class HandshakeResponse(_message.Message):
     __slots__ = ("id", "status")

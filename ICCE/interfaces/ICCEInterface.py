@@ -6,7 +6,7 @@ import time
 
 class ICCEInterface:
     
-    def __init__(self, frequency_hz=120):
+    def __init__(self, frequency_hz=120, agent_hint = INVALID_ID):
         # ICCE attributes
         self.n_observation: int
         self.n_action: int
@@ -21,6 +21,7 @@ class ICCEInterface:
         self.status = Status.SUCCESS
         self.episode = 0
         self.frequency_seconds = 1.0 / frequency_hz
+        self.agent_hint = agent_hint
 
         # Communication layer endpoint
         self._endpoint = ICCEEndpoint()
@@ -118,7 +119,7 @@ class ICCEInterface:
         print(f"{self.n_observations}  {self.n_actions}")
 
         # Invoke RPC
-        response = self._endpoint.handshake_and_validate(self.n_observations, self.n_actions)
+        response = self._endpoint.handshake_and_validate(self.n_observations, self.n_actions, self.agent_hint)
 
         ## Handshake failed
         if Status(response.status) != Status.SUCCESS:
@@ -129,7 +130,7 @@ class ICCEInterface:
                 case Status.ACTION_SIZE_ERROR:
                     print('n_actions do not match.')
                 case Status.ICCE_ID_ERROR:
-                    print('Failed to generate ICCE ID. Maximum Agents mapped.')
+                    print('Failed to generate ICCE ID. Maximum Agents mapped or invalid Simulation Agent ID hinted.')
                 case Status.AGENT_ID_ERROR:
                     print('Failed to map Agent ID. Maximum Agents mapped.')
             # End program

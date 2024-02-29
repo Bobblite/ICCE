@@ -102,7 +102,13 @@ class EnvironmentInterface:
 
         Args:
             agent_id : The identifier of the agent recognized by the Simulation.
+
+        Raise:
+            ValueError: If the Agent ID being registered has already been registered prior.
         """
+        if agent_id in self.registered_agents:
+            raise ValueError("Identical Agent IDs detected while registering Agents!")
+        
         self.registered_agents.append(agent_id)
 
     def _reset(self):
@@ -238,7 +244,7 @@ class EnvironmentInterface:
     
 
     ########## CORE CALLBACKS ##########
-    def _on_handshake_and_validate(self, n_observation: int, n_actions: int) -> tuple[int, Status]:
+    def _on_handshake_and_validate(self, n_observation: int, n_actions: int, agent_hint: int) -> tuple[int, Status]:
         """ Callback function used to generate ICCE ID and validate observation/action spaces.
         
         This is function is called when the RPC method `handshake_and_validate` is invoked. An ICCE ID is generated using the implemented
@@ -257,15 +263,31 @@ class EnvironmentInterface:
             return INVALID_ID, Status.OBSERVATION_SIZE_ERROR
         if (self.n_action != n_actions):
             return INVALID_ID, Status.ACTION_SIZE_ERROR
-        # Generate ICCE ID using interfaced function
-        icce_id = self._generate_icce_id()
-        if icce_id == INVALID_ID:
-            return INVALID_ID, Status.ICCE_ID_ERROR
         
-        # Get an agent that has yet to be mapped
-        agent_id = self._generate_agent_id()
-        if agent_id == INVALID_ID:
-            return INVALID_ID, Status.AGENT_ID_ERROR
+        agent_id = INVALID_ID
+        # If ICCE requests to be mapped to a particular Agent ID
+        if agent_hint != INVALID_ID:
+            # Requested Agent is already mapped: Error!
+            if agent_hint in self.active_agents:
+                return INVALID_ID, Status.AGENT_ID_ERROR
+            # Requested Agent is available
+            agent_id = agent_hint
+        # ICCE does not request any particular Agent IDs
+        else:
+            # Get an agent that has yet to be mapped
+            agent_id = self._generate_agent_id()
+            if agent_id == INVALID_ID:
+                return INVALID_ID, Status.AGENT_ID_ERROR
+        
+        # Generate ICCE ID based on registered agent
+        try:
+            icce_id = self.registered_agents.index(agent_id)
+        except:
+            return INVALID_ID, Status.ICCE_ID_ERROR 
+
+        # icce_id = self._generate_icce_id()
+        # if icce_id == INVALID_ID:
+        #    return INVALID_ID, Status.ICCE_ID_ERROR 
         
         # Map icce to agent
         self._add_icce(icce_id, agent_id)

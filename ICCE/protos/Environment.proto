@@ -14,6 +14,7 @@ message HandshakeRequest
 {
 	int32 n_observations = 1;
 	int32 n_actions = 2;
+	int32 agent_hint = 3;
 }
 
 message HandshakeResponse

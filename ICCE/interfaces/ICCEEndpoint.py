@@ -6,10 +6,11 @@ class ICCEEndpoint():
         self._channel = grpc.insecure_channel('localhost:50051')
         self._stub = Environment_pb2_grpc.EnvironmentStub(self._channel)
 
-    def handshake_and_validate(self, n_observations, n_actions):
+    def handshake_and_validate(self, n_observations, n_actions, agent_hint):
         handshake_req = Environment_pb2.HandshakeRequest(
             n_observations=n_observations,
-            n_actions=n_actions)
+            n_actions=n_actions,
+            agent_hint=agent_hint)
         
         return self._stub.handshake_and_validate(handshake_req)
 

@@ -6,7 +6,7 @@ from pynput.keyboard import Key
 
 class HILICCE(ICCEInterface):
     def __init__(self):
-        super().__init__(frequency_hz=120)
+        super().__init__(frequency_hz=120, agent_hint=0)
         self.n_observations = 30
         self.n_actions = 4
         self.inputManager = InputManager()
