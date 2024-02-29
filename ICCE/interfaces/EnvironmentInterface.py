@@ -293,9 +293,10 @@ class EnvironmentInterface:
         self._add_icce(icce_id, agent_id)
 
         # Print log
-        print("New ICCE registered. ICCE : Agent map")
-        for agent in self._sim_agent_to_icce.keys():
-            print(f"{agent} : {self._sim_agent_to_icce[agent]}")
+        if self.debug:
+            print("New ICCE registered. ICCE : Agent map")
+            for agent in self._sim_agent_to_icce.keys():
+                print(f"{agent} : {self._sim_agent_to_icce[agent]}")
 
         return icce_id, Status.SUCCESS
     
