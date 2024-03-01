@@ -4,7 +4,7 @@ from pyflyt_dogfight import SimulationListener
 
 class Environment(EnvironmentInterface):
     def __init__(self):
-        super().__init__(max_episodes=10, debug=True)
+        super().__init__(max_episodes=3)
 
         # Set input/output sizes
         self.n_observation = 30
@@ -27,7 +27,6 @@ class Environment(EnvironmentInterface):
     
     def reset(self):
         response = self._sim_listener.reset(iterations=1)
-        print('reset env: ', self.i)
         self.i+=1
         return response.status
     

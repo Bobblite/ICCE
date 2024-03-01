@@ -1,6 +1,7 @@
 from .EnvironmentEndpoint import EnvironmentEndpoint
 from ..utils import Status, INVALID_ID
 
+from tqdm import tqdm
 import numpy as np
 import time
 import threading
@@ -89,8 +90,7 @@ class EnvironmentInterface:
         # Set status to shutdown
         self.status = Status.SHUTDOWN
         # Sleep to allow time for ICCEs to sample this shutdown status
-        print('Shutting down...')
-        time.sleep(10)
+        self._wait(time_seconds=10, description="SHUTTING DOWN")
         self._endpoint.shutdown()
 
     def register(self, agent_id):
@@ -173,7 +173,7 @@ class EnvironmentInterface:
                 self.status = Status.DONE
 
                 # Sleep to allow time for ICCEs to sample this truncated observation
-                time.sleep(self.time_between_episodes)
+                self._wait(time_seconds=self.time_between_episodes, description=f"EPISODE {self.episode+1}/{self.max_episodes} COMPLETE")
 
                 # Reset Simulation and environment
                 self._reset()
@@ -380,4 +380,17 @@ class EnvironmentInterface:
             self._icce_to_sim_agent.update({icce_id:agent_id})
             self._sim_agent_to_icce.update({agent_id:icce_id})
     
+    def _wait(self, time_seconds: int, description: str | None = None):
+        """ Sleeps and renders progress bar.
+
+        Helper functionality to wait for a specified amount of time(in seconds). Also renders a progress bar onto
+        the terminal to visualize remaining time.
+
+        Args:
+            time_seconds : Time in seconds to wait.
+            description : Text to render on the left of the progress bar.
+        """
+        for _ in tqdm(range(time_seconds*4), desc=description):
+            time.sleep(0.25)
+
 

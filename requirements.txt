@@ -4,7 +4,7 @@ Farama-Notifications==0.0.4
 grpcio==1.62.0
 grpcio-tools==1.62.0
 gymnasium==0.29.1
--e git+https://github.com/Bobblite/ICCE.git@974d9e3a02785793bef9ce6fcbb4ff536842bbef#egg=ICCE
+-e git+https://github.com/Bobblite/ICCE.git@f8822a094f70fe8f53a7b603d62f3b1fa4c495bc#egg=ICCE
 llvmlite==0.42.0
 numba==0.59.0
 numpy==1.26.4
@@ -18,4 +18,5 @@ python-xlib==0.33
 PyYAML==6.0.1
 scipy==1.12.0
 six==1.16.0
+tqdm==4.66.2
 typing_extensions==4.10.0
