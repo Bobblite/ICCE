@@ -54,7 +54,7 @@ class EnvironmentServicer(Environment_pb2_grpc.EnvironmentServicer):
     
 
 class EnvironmentEndpoint():
-    def __init__(self, handshake_cb, sample_cb, act_cb):
+    def __init__(self, handshake_cb, sample_cb, act_cb, ip_addr='localhost'):
         # gRPC server
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._server_thread = threading.Thread(target=self.start_server)
@@ -63,7 +63,7 @@ class EnvironmentEndpoint():
         self._servicer = EnvironmentServicer(handshake_cb=handshake_cb, sample_cb=sample_cb, act_cb=act_cb)
 
         Environment_pb2_grpc.add_EnvironmentServicer_to_server(self._servicer, self._server)
-        self._server.add_insecure_port('localhost:50051')
+        self._server.add_insecure_port(ip_addr+':50051')
     
     def start(self):
         """ Starts the Environment communication layer on a separate thread. """

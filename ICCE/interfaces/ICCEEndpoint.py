@@ -2,8 +2,8 @@ import grpc
 from ..grpc_interfaces import Environment_pb2, Environment_pb2_grpc
 
 class ICCEEndpoint():
-    def __init__(self):
-        self._channel = grpc.insecure_channel('localhost:50051')
+    def __init__(self, ip_addr = 'localhost'):
+        self._channel = grpc.insecure_channel(ip_addr+':50051')
         self._stub = Environment_pb2_grpc.EnvironmentStub(self._channel)
 
     def handshake_and_validate(self, n_observations, n_actions, agent_hint):

@@ -6,7 +6,7 @@ import time
 
 class ICCEInterface:
     
-    def __init__(self, frequency_hz=120, agent_hint = INVALID_ID):
+    def __init__(self, frequency_hz=120, agent_hint = INVALID_ID, ip_addr = 'localhost'):
         # ICCE attributes
         self.n_observation: int
         self.n_action: int
@@ -24,7 +24,7 @@ class ICCEInterface:
         self.agent_hint = agent_hint
 
         # Communication layer endpoint
-        self._endpoint = ICCEEndpoint()
+        self._endpoint = ICCEEndpoint(ip_addr=ip_addr)
 
     def run(self):
         """ Runs the ICCE client.

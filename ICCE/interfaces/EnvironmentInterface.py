@@ -7,7 +7,7 @@ import time
 import threading
 
 class EnvironmentInterface:
-    def __init__(self, frequency_hz=240, max_episodes=10, time_between_episodes=3, debug = False):
+    def __init__(self, frequency_hz=240, max_episodes=10, time_between_episodes=3, debug = False, ip_addr = 'localhost'):
         # Environment attributes
         self.n_observation: int # n_observation of an agent
         self.n_action: int # n_action of an agent
@@ -40,7 +40,8 @@ class EnvironmentInterface:
         self._endpoint = EnvironmentEndpoint(
             handshake_cb=self._on_handshake_and_validate,
             sample_cb=self._on_sample,
-            act_cb=self._on_act
+            act_cb=self._on_act,
+            ip_addr=ip_addr
         )
 
         # Mutex lock
