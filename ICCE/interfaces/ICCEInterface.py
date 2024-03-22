@@ -147,7 +147,7 @@ class ICCEInterface:
         # Cache into memory
         self.observation = np.frombuffer(
             buffer=response.observation,
-            dtype=np.float32
+            dtype=np.float64
         )
         self.reward = response.reward
         self.term = response.terminated

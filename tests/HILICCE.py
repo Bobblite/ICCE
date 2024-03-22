@@ -3,6 +3,7 @@ from InputManager import InputManager
 
 import numpy as np
 from pynput.keyboard import Key
+import time
 
 class HILICCE(ICCEInterface):
     def __init__(self):
@@ -19,7 +20,8 @@ class HILICCE(ICCEInterface):
         pass
 
     def act(self, observation: np.ndarray) -> np.ndarray:
-        return self.handle_inputs()
+        return np.zeros(shape=(4), dtype=np.float32)
+        # return self.handle_inputs()
 
     def handle_inputs(self):
         # Reset actions

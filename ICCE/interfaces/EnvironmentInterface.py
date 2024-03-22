@@ -74,7 +74,7 @@ class EnvironmentInterface:
         # Instantiate environment data
         self.observations = np.ndarray(shape=(len(self.registered_agents), self.n_observation), dtype=np.float64)
         self.actions = np.ndarray(shape=(len(self.registered_agents), self.n_action), dtype=np.float32)
-        self.rewards = np.ndarray(shape=(len(self.registered_agents)), dtype=np.float64)
+        self.rewards = np.ndarray(shape=(len(self.registered_agents)), dtype=np.float32)
         self.term = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
         self.trunc = np.ndarray(shape=(len(self.registered_agents)), dtype=bool)
         self.info = [{} for _ in range(len(self.registered_agents))]

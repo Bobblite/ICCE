@@ -17,6 +17,9 @@ class Simulation:
         self.info = None # TODO
         self.action = np.zeros(shape=(2, 4), dtype=np.float32)
 
+        # Workaround of reward setting to 0 on terminate
+        self.done = False
+
         # API
         self._sim_publisher = SimulationPublisher(sample_cb=self.on_sample, act_cb=self.on_act, reset_cb=self.on_reset)
         self.reset_flag = True
@@ -36,13 +39,19 @@ class Simulation:
             if self.reset_flag:
                 self.reset()
 
+            if self.done:
+                continue
+
             # Set simulation data
             # actions = np.zeros(shape=(2, 4))
             # actions[:, -1] = 1.0
 
             # Step environment
             obs, rewards, terminated, truncated, info = self.env.step(self.action)
-            
+
+            if any(terminated) or any(truncated):
+                self.done = True
+
             with self._lock:
                 self.observation = obs.copy()
                 self.rewards = rewards.copy()
@@ -61,6 +70,7 @@ class Simulation:
             self.truncated = np.full(shape=(2), fill_value=False, dtype=bool)
             self.terminated = np.full(shape=(2), fill_value=False, dtype=bool)
             self.reset_flag = False
+            self.done = False
             return True
     
     def on_sample(self, agent_id):

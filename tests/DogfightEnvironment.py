@@ -4,7 +4,7 @@ from pyflyt_dogfight import SimulationListener
 
 class Environment(EnvironmentInterface):
     def __init__(self):
-        super().__init__(max_episodes=3)
+        super().__init__(max_episodes=10000)
 
         # Set input/output sizes
         self.n_observation = 30
