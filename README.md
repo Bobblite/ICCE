@@ -65,17 +65,43 @@ This interface is called whenever environment data is sampled from the environme
 #### `post_episode(self)`
 This interface is called at the end of an episode. Users can utilize this interface to define training code which includes but not limited to optimizing the policy using `optimizer.step()`.
 
+## System Requirements
+**This project is developed to target Ubuntu platforms**, specifically, the project has been developed and tested on a machine with the following specifications.
+
+
+| Specification | Model |
+|---|---|
+| Hardware Model | Dell Inc. Precision Tower 3620 |
+| Processor | Intel® Xeon(R) CPU E3-1220 v5 @ 3.00GHz × 4 |
+| Memory | 8GB |
+| Graphics Card | NV117 |
+| OS | Ubuntu 22.04.3 LTS |
+| OS Type | 64-bit |
 
 ## Installation
 The project has been set-up as a python package, where installation of the project and dependencies are done through a `pip install` call. As this project is still in development, users are expected to clone this project, and do a local, editable installation of the package into their own project.
 
 The steps to setting up a new project which utilizes the ICCE framework is as follows:
-1. Clone the ICCE repository into a directory of your choice.
-2. Create a separate directory to house the project: `mkdir [project name]`.
-3. Create a new virtual environment using a virtual environment of your choice (`venv`, `virtualenvwrapper`, etc.) and activate it.
-4. Navigate to the project directory: `cd [project name]`.
-5. Locally install the ICCE package as an editable using `pip install -e [path to ICCE directory]`.
-6. Now your virtual environment is set-up to utilize the modules implemented in the ICCE package.
+1. Copy the entire ICCE project into a directory of your choice.
+2. Create a separate directory to house the project using the ICCE framework
+```
+mkdir [project name]
+```
+3. Create a new virtual environment using a virtual environment of your choice (`venv`, `virtualenvwrapper`, etc.) with `Python 3.10` and activate it.
+```
+mkvirtualenv -p python3.10 ICCE
+workon ICCE
+```
+4. Navigate into the directory
+```
+cd [project name]
+```
+5. Locally install the ICCE package as an editable using
+```
+pip install -e [path to ICCE directory]
+```
+
+Now your virtual environment is set-up to utilize the modules implemented in the ICCE package.
 
 ## Usage
 *Note: Your simulation software must have an interface which supports retrieving and publishing data to and from the simulation, as well as functionality to reset the simulation.*
@@ -103,7 +129,7 @@ class Environment(EnvironmentInterface):
         self.n_observation = 30
         self.n_action = 4
 
-        # Register simulation entities using their unique identifier
+        # Register simulation entities using their unique identifier (usually assigned by the simulation)
         self.register(0)
         self.register(1)
 ```
